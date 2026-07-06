@@ -1,0 +1,3 @@
+AllowRootDirInstall true
+ShowInstDetails show
+ShowUninstDetails show
