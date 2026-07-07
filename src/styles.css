@@ -621,6 +621,9 @@ button:disabled {
   transform: translateX(calc(100% + 24px));
   transition: transform 220ms ease;
   background: rgba(247, 249, 251, 0.92);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-drawer.open {
@@ -640,6 +643,8 @@ button:disabled {
   overflow: auto;
   padding-right: 2px;
   scrollbar-width: none;
+  min-height: 0;
+  flex: 1;
 }
 
 .theme-list::-webkit-scrollbar {
@@ -652,8 +657,9 @@ button:disabled {
   border-radius: var(--radius-lg);
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
   text-align: left;
+  overflow: hidden;
 }
 
 .theme-item.active {
@@ -673,6 +679,16 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.theme-copy strong,
+.theme-copy small {
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .settings-mask {

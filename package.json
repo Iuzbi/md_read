@@ -1,6 +1,6 @@
 {
   "name": "md-read",
-  "version": "1.1.0",
+  "version": "1.1.1-beta",
   "description": "A desktop Markdown reader and editor for Windows.",
   "main": "dist-electron/main.cjs",
   "author": "Iuzbi",

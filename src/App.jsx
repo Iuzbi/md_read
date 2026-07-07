@@ -3,6 +3,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { starterMarkdown } from "./sample";
 
+const APP_VERSION_LABEL = "1.1.1_beta";
+
 const STORAGE_KEYS = {
   theme: "mojian-theme",
   editorRatio: "mojian-editor-ratio",
@@ -12,8 +14,8 @@ const STORAGE_KEYS = {
 const themes = [
   {
     id: "mist",
-    name: "Mist Blue",
-    note: "Clean and soft for long reading sessions.",
+    name: "晨雾灰蓝",
+    note: "清透克制，适合长时间阅读。",
     colors: {
       "--app-bg": "#eaf0f4",
       "--shell-bg": "rgba(245, 248, 251, 0.78)",
@@ -34,8 +36,8 @@ const themes = [
   },
   {
     id: "matcha",
-    name: "Matcha Cloud",
-    note: "A softer green with stronger eye comfort.",
+    name: "抹茶云影",
+    note: "柔和清绿，护眼感更强。",
     colors: {
       "--app-bg": "#eef3ec",
       "--shell-bg": "rgba(248, 251, 246, 0.76)",
@@ -56,8 +58,8 @@ const themes = [
   },
   {
     id: "sand",
-    name: "Warm Sand",
-    note: "Paper-like and comfortable in preview mode.",
+    name: "暖砂纸感",
+    note: "接近纸面质感，预览更舒服。",
     colors: {
       "--app-bg": "#f2ede5",
       "--shell-bg": "rgba(249, 245, 239, 0.76)",
@@ -78,8 +80,8 @@ const themes = [
   },
   {
     id: "lake",
-    name: "Lake Light",
-    note: "Cooler and calmer for focused work.",
+    name: "湖光青岚",
+    note: "更偏冷静的工作氛围。",
     colors: {
       "--app-bg": "#e8f0f5",
       "--shell-bg": "rgba(245, 249, 252, 0.76)",
@@ -100,8 +102,8 @@ const themes = [
   },
   {
     id: "lavender",
-    name: "Lavender Fog",
-    note: "A gentle purple-grey with more design character.",
+    name: "雾紫奶灰",
+    note: "偏设计感，但依旧克制耐看。",
     colors: {
       "--app-bg": "#eeedf4",
       "--shell-bg": "rgba(247, 246, 251, 0.76)",
@@ -122,8 +124,8 @@ const themes = [
   },
   {
     id: "amber",
-    name: "Amber Sun",
-    note: "Warm and bright with a richer desktop feel.",
+    name: "琥珀日光",
+    note: "暖色办公氛围，更有层次感。",
     colors: {
       "--app-bg": "#f5efe6",
       "--shell-bg": "rgba(251, 247, 240, 0.76)",
@@ -144,8 +146,8 @@ const themes = [
   },
   {
     id: "ink",
-    name: "Ink Night",
-    note: "A dark theme that keeps contrast soft.",
+    name: "墨青夜读",
+    note: "夜间也能保持层次，不刺眼。",
     colors: {
       "--app-bg": "#1b2229",
       "--shell-bg": "rgba(28, 35, 42, 0.82)",
@@ -167,10 +169,10 @@ const themes = [
 ];
 
 const quickInsert = [
-  { label: "H2", value: "\n## Section Title\n" },
-  { label: "List", value: "\n- Todo item\n- Next action\n" },
-  { label: "Quote", value: "\n> Write the key point here\n" },
-  { label: "Code", value: '\n```ts\nconst note = "hello";\n```\n' }
+  { label: "H2", value: "\n## 小节标题\n" },
+  { label: "列表", value: "\n- 待办事项\n- 下一步动作\n" },
+  { label: "引用", value: "\n> 在这里写下重点结论\n" },
+  { label: "代码", value: '\n```ts\nconst note = "你好";\n```\n' }
 ];
 
 function readStoredRecentDocs() {
@@ -190,7 +192,7 @@ function readStoredRecentDocs() {
 function createDraftDocument() {
   return {
     id: `draft-${Date.now()}`,
-    title: "Untitled",
+    title: "未命名文档",
     path: "",
     content: starterMarkdown,
     updatedAt: new Date().toISOString(),
@@ -206,10 +208,10 @@ function extractTitle(content) {
     .find(Boolean);
 
   if (!firstLine) {
-    return "Untitled";
+    return "未命名文档";
   }
 
-  return firstLine.replace(/^#+\s*/, "") || "Untitled";
+  return firstLine.replace(/^#+\s*/, "") || "未命名文档";
 }
 
 function createDocumentFromPayload(payload) {
@@ -254,7 +256,7 @@ function dedupeRecentDocs(documents) {
 
     map.set(item.path, {
       path: item.path,
-      title: item.title || "Untitled",
+      title: item.title || "未命名文档",
       updatedAt: item.updatedAt || new Date().toISOString()
     });
   });
@@ -269,7 +271,7 @@ function App() {
     return window.localStorage.getItem(STORAGE_KEYS.theme) || themes[0].id;
   });
   const [currentDoc, setCurrentDoc] = useState(null);
-  const [status, setStatus] = useState("Ready");
+  const [status, setStatus] = useState("准备就绪");
   const [isEditorPriority, setIsEditorPriority] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -340,14 +342,14 @@ function App() {
     setStatus(nextStatus);
   });
 
-  const openDocumentByPath = useEffectEvent(async (filePath, nextStatus = "External document opened") => {
+  const openDocumentByPath = useEffectEvent(async (filePath, nextStatus = "已打开外部文档") => {
     if (!filePath) {
       return;
     }
 
     const result = await window.mdBridge.openPath(filePath);
     if (!result) {
-      setStatus("Unable to open this document");
+      setStatus("无法打开该文档");
       return;
     }
 
@@ -360,7 +362,7 @@ function App() {
     }
 
     return window.mdBridge.onExternalOpen((filePath) => {
-      void openDocumentByPath(filePath, "Document redirected to the current window");
+      void openDocumentByPath(filePath, "已在当前窗口接管文档");
     });
   }, [openDocumentByPath]);
 
@@ -414,7 +416,7 @@ function App() {
       event.preventDefault();
       dragDepthRef.current = 0;
       setIsDragActive(false);
-      void openDocumentByPath(file.path, "Opened from drag and drop");
+      void openDocumentByPath(file.path, "已拖入打开");
     }
 
     window.addEventListener("dragenter", handleDragEnter);
@@ -460,22 +462,22 @@ function App() {
 
   const createDocument = useEffectEvent(() => {
     setCurrentDoc(createDraftDocument());
-    setStatus("New draft created");
+    setStatus("已创建新草稿");
   });
 
   const openDocument = useEffectEvent(async () => {
     const result = await window.mdBridge.openMarkdown();
     if (!result) {
-      setStatus("Open cancelled");
+      setStatus("已取消打开文件");
       return;
     }
 
-    replaceCurrentDocument(result, `Opened ${result.title}`);
+    replaceCurrentDocument(result, `已打开 ${result.title}`);
   });
 
   const saveDocument = useEffectEvent(async (forceSaveAs = false) => {
     if (!currentDoc) {
-      setStatus("There is no document to save");
+      setStatus("当前没有可保存的文档");
       return;
     }
 
@@ -491,7 +493,7 @@ function App() {
         : await window.mdBridge.saveMarkdown(payload);
 
     if (!result.saved) {
-      setStatus("Save cancelled");
+      setStatus("保存已取消");
       return;
     }
 
@@ -512,7 +514,7 @@ function App() {
       return nextDoc;
     });
 
-    setStatus(`Saved to ${result.path}`);
+    setStatus(`已保存到 ${result.path}`);
   });
 
   useEffect(() => {
@@ -579,12 +581,12 @@ function App() {
       };
     });
 
-    setStatus("Content updated");
+    setStatus("内容已更新");
   }
 
   function closeDocument() {
     setCurrentDoc(null);
-    setStatus("Workspace cleared");
+    setStatus("工作区已清空");
   }
 
   function insertSnippet(snippet) {
@@ -615,40 +617,40 @@ function App() {
 
   function focusEditor() {
     editorRef.current?.focus();
-    setStatus("Editor focused");
+    setStatus("已聚焦编辑区");
   }
 
   async function copyPath() {
     if (!currentDoc?.path) {
-      setStatus("This document has no file path yet");
+      setStatus("当前文档还没有本地路径");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(currentDoc.path);
-      setStatus("File path copied");
+      setStatus("已复制文件路径");
     } catch {
-      setStatus("Copy path failed");
+      setStatus("复制路径失败");
     }
   }
 
   async function revealInFolder() {
     if (!currentDoc?.path || !window.mdBridge?.revealInFolder) {
-      setStatus("This document has no file path yet");
+      setStatus("当前文档还没有本地路径");
       return;
     }
 
     await window.mdBridge.revealInFolder(currentDoc.path);
-    setStatus("Revealed in Explorer");
+    setStatus("已在资源管理器中定位文件");
   }
 
   function restoreRecentDocument(item) {
-    void openDocumentByPath(item.path, "Restored from recent files");
+    void openDocumentByPath(item.path, "已从最近文件恢复");
   }
 
   function clearRecentDocs() {
     setRecentDocs([]);
-    setStatus("Recent files cleared");
+    setStatus("已清空最近记录");
   }
 
   function applyResize(clientX) {
@@ -708,39 +710,39 @@ function App() {
             <div className="brand-mark" />
             <div className="brand-copy">
               <strong>MoJian Markdown</strong>
-              <span>{currentDoc ? "Single document workspace" : "Minimal Markdown editor for Windows"}</span>
+              <span>{currentDoc ? "单文档工作区" : "面向 Windows 的简约 Markdown 编辑器"}</span>
             </div>
           </div>
 
           <div className="topbar-actions">
             <button className="primary-button" onClick={() => void openDocument()}>
-              Open
+              打开
             </button>
             <button className="secondary-button" onClick={createDocument}>
-              New
+              新建
             </button>
             <button className="secondary-button" onClick={() => void saveDocument(false)} disabled={!currentDoc}>
-              Save
+              保存
             </button>
             <button className="secondary-button" onClick={() => void saveDocument(true)} disabled={!currentDoc}>
-              Save As
+              另存为
             </button>
             <button className="secondary-button" onClick={() => setIsSettingsOpen(true)}>
-              Settings
+              设置
             </button>
           </div>
 
           <div className="topbar-meta">
             {currentDoc ? (
               <>
-                <span className="meta-pill">{currentDoc.dirty ? "Unsaved" : "Saved"}</span>
-                <span className="meta-pill">{metrics?.chars} chars</span>
-                <span className="meta-pill">{metrics?.lines} lines</span>
-                <span className="meta-pill">{metrics?.words} words</span>
+                <span className="meta-pill">{currentDoc.dirty ? "未保存" : "已保存"}</span>
+                <span className="meta-pill">{metrics?.chars} 字符</span>
+                <span className="meta-pill">{metrics?.lines} 行</span>
+                <span className="meta-pill">{metrics?.words} 词</span>
                 <span className="meta-text">{formatTime(currentDoc.updatedAt)}</span>
               </>
             ) : (
-              <span className="meta-text">Drag files in, double click linked docs, or reuse the existing window</span>
+              <span className="meta-text">支持拖入文件、双击已关联文档，或复用当前窗口</span>
             )}
           </div>
         </header>
@@ -754,7 +756,7 @@ function App() {
                     <h1>{currentDoc.title}</h1>
                     {currentDoc.dirty ? <span className="dirty-dot" /> : null}
                   </div>
-                  <p>{currentDoc.path || "Unsaved draft"}</p>
+                  <p>{currentDoc.path || "未保存草稿"}</p>
                 </div>
 
                 <div className="document-tools">
@@ -764,19 +766,19 @@ function App() {
                     </button>
                   ))}
                   <button className="tool-chip" onClick={focusEditor}>
-                    Focus Editor
+                    聚焦编辑
                   </button>
                   <button className="tool-chip" onClick={() => setIsEditorPriority((value) => !value)}>
-                    {isEditorPriority ? "Balanced View" : "Editor First"}
+                    {isEditorPriority ? "恢复双栏" : "编辑优先"}
                   </button>
                   <button className="tool-chip" onClick={copyPath} disabled={!currentDoc.path}>
-                    Copy Path
+                    复制路径
                   </button>
                   <button className="tool-chip" onClick={revealInFolder} disabled={!currentDoc.path}>
-                    Show in Folder
+                    定位文件
                   </button>
                   <button className="tool-chip tool-chip-danger" onClick={closeDocument}>
-                    Close
+                    关闭
                   </button>
                 </div>
               </section>
@@ -791,8 +793,8 @@ function App() {
               >
                 <section className="panel">
                   <div className="panel-head">
-                    <span>Editor</span>
-                    <small>{currentDoc.path ? "Local file" : "Unsaved draft"}</small>
+                    <span>编辑区</span>
+                    <small>{currentDoc.path ? "本地文件" : "未保存草稿"}</small>
                   </div>
                   <textarea
                     ref={editorRef}
@@ -807,7 +809,7 @@ function App() {
                 <div
                   className="panel-resizer"
                   role="separator"
-                  aria-label="Resize editor and preview panels"
+                  aria-label="调整编辑区与预览区宽度"
                   aria-orientation="vertical"
                   onPointerDown={startResize}
                 >
@@ -816,7 +818,7 @@ function App() {
 
                 <section className="panel panel-preview">
                   <div className="panel-head">
-                    <span>Preview</span>
+                    <span>预览区</span>
                     <small>{status}</small>
                   </div>
                   <article ref={previewRef} className="markdown-body preview-scroll" onScroll={handlePreviewScroll}>
@@ -827,51 +829,50 @@ function App() {
 
               <footer className="status-bar">
                 <span>{status}</span>
-                <span>{currentDoc.path ? currentDoc.path : "Ctrl+S to save, Ctrl+Shift+S to save as"}</span>
+                <span>{currentDoc.path ? currentDoc.path : "Ctrl+S 保存，Ctrl+Shift+S 另存为"}</span>
               </footer>
             </>
           ) : (
             <section className={`home ${isDragActive ? "drag-active" : ""}`}>
               <div className="hero-card">
                 <div className="hero-copy">
-                  <span className="hero-tag">MoJian 1.1.0</span>
-                  <h1>Start from a cleaner Markdown workspace</h1>
+                  <span className="hero-tag">MoJian {APP_VERSION_LABEL}</span>
+                  <h1>从更干净的 Markdown 工作台开始</h1>
                   <p>
-                    The main actions now live in the top toolbar. Open a local file, drag a document into the window,
-                    or create a new draft and start writing with a simpler layout.
+                    主要操作现在集中在顶部工具栏。你可以打开本地文件，把文档拖入窗口，或先创建一份草稿再开始写作。
                   </p>
                   <div className="hero-actions">
                     <button className="primary-button" onClick={() => void openDocument()}>
-                      Open Local File
+                      打开本地文件
                     </button>
                     <button className="secondary-button" onClick={createDocument}>
-                      New Draft
+                      新建草稿
                     </button>
                   </div>
                 </div>
 
                 <div className="hero-grid">
                   <article className="hero-info-card">
-                    <strong>Top toolbar</strong>
-                    <span>Moves key actions upward and reduces left-side noise.</span>
+                    <strong>顶部工具栏</strong>
+                    <span>把关键操作上移，减少左侧视觉噪音。</span>
                   </article>
                   <article className="hero-info-card">
-                    <strong>Single-instance flow</strong>
-                    <span>Drag-and-drop, file association and shortcut opens all reuse the current window.</span>
+                    <strong>单实例接管</strong>
+                    <span>拖拽、文件关联和快捷方式打开都会复用当前窗口。</span>
                   </article>
                   <article className="hero-info-card">
-                    <strong>Sync and resize</strong>
-                    <span>Editor and preview stay linked, and both panes can be resized freely.</span>
+                    <strong>同步与分栏</strong>
+                    <span>编辑区和预览区保持联动，同时支持自由拖拽宽度。</span>
                   </article>
                 </div>
               </div>
 
               <section className="recent-panel">
                 <div className="section-head">
-                  <h2>Recent Files</h2>
+                  <h2>最近文件</h2>
                   {recentDocs.length > 0 ? (
                     <button className="text-button" onClick={clearRecentDocs}>
-                      Clear
+                      清空
                     </button>
                   ) : null}
                 </div>
@@ -888,8 +889,8 @@ function App() {
                   </div>
                 ) : (
                   <div className="recent-empty">
-                    <span>No recent files yet</span>
-                    <small>Open or drag in a Markdown file and it will appear here for quick access.</small>
+                    <span>暂无最近文件</span>
+                    <small>打开或拖入一个 Markdown 文件后，这里会保留快速入口。</small>
                   </div>
                 )}
               </section>
@@ -901,16 +902,16 @@ function App() {
       <aside className={`settings-drawer ${isSettingsOpen ? "open" : ""}`}>
         <div className="settings-head">
           <div>
-            <span className="settings-tag">Settings</span>
-            <h2>Theme Library</h2>
+            <span className="settings-tag">设置</span>
+            <h2>主题库</h2>
           </div>
           <button className="secondary-button" onClick={() => setIsSettingsOpen(false)}>
-            Close
+            关闭
           </button>
         </div>
 
         <div className="settings-copy">
-          <p>Theme switching lives only here. Each preset is designed to be richer, softer and easier on the eyes.</p>
+          <p>主题切换集中放在这里。每一套预设都更强调护眼、层次和整体观感。</p>
         </div>
 
         <div className="theme-list">
