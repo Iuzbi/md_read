@@ -55,6 +55,10 @@
       "output": "release",
       "buildResources": "build"
     },
+    "electronDist": "node_modules/electron/dist",
+    "electronDownload": {
+      "cache": ".electron-cache"
+    },
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
