@@ -346,6 +346,8 @@ function App() {
   const workspaceFrameClassName = `workspace-frame ${isSidebarVisible ? "with-sidebar" : "without-sidebar"} ${
     isPreviewMode ? "is-preview-mode" : ""
   }`;
+  const emptyStateTitle = "打开一个 Markdown 文档";
+  const emptyStateDescription = "支持本地打开、拖入窗口和最近文件恢复。";
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEYS.theme, themeId);
@@ -888,6 +890,16 @@ function App() {
     action();
   }
 
+  function enterPreviewMode() {
+    setWorkMode(WORK_MODES.preview);
+    setStatus("已切换到预览模式");
+  }
+
+  function exitPreviewMode() {
+    setWorkMode(WORK_MODES.split);
+    setStatus("已返回编辑模式");
+  }
+
   const fileMenu = [
     { label: "新建", shortcut: "Ctrl+N", action: () => createDocument() },
     { label: "打开", shortcut: "Ctrl+O", action: () => void openDocument() },
@@ -907,10 +919,7 @@ function App() {
       label: "预览模式",
       shortcut: "Ctrl+P",
       active: workMode === WORK_MODES.preview,
-      action: () => {
-        setWorkMode(WORK_MODES.preview);
-        setStatus("已切换到预览模式");
-      }
+      action: enterPreviewMode
     },
     { type: "divider" },
     { label: "关闭当前文档", shortcut: "", disabled: !currentDoc, action: closeDocument }
@@ -940,9 +949,12 @@ function App() {
       label: workMode === WORK_MODES.preview ? "切回双栏编辑" : "切换全屏预览",
       shortcut: "",
       action: () => {
-        const nextMode = workMode === WORK_MODES.preview ? WORK_MODES.split : WORK_MODES.preview;
-        setWorkMode(nextMode);
-        setStatus(nextMode === WORK_MODES.preview ? "已切换到预览模式" : "已切换到编辑模式");
+        if (workMode === WORK_MODES.preview) {
+          exitPreviewMode();
+          return;
+        }
+
+        enterPreviewMode();
       }
     },
     { type: "divider" },
@@ -1050,7 +1062,7 @@ function App() {
               <small>
                 {currentDoc
                   ? `${currentDoc.dirty ? "未保存更改" : "当前文档已同步"} · ${isPreviewMode ? "预览模式" : "双栏编辑"}`
-                  : `正式版 ${APP_VERSION_LABEL}`}
+                  : APP_TITLE}
               </small>
             </div>
           </div>
@@ -1062,7 +1074,7 @@ function App() {
               <div className="side-panel-section">
                 <span className="side-label">当前状态</span>
                 <strong>{currentDoc ? currentDoc.title : "空白工作区"}</strong>
-                <p>{currentDoc ? status : "可以打开本地文档、拖入 Markdown，或先创建一份新草稿。"}</p>
+                <p>{currentDoc ? status : "等待打开文档"}</p>
               </div>
 
               <div className="side-panel-card">
@@ -1105,7 +1117,7 @@ function App() {
                     </div>
                   </>
                 ) : (
-                  <p>未打开文档时，这里会显示当前工作区和文档的核心信息。</p>
+                  <p>打开文档后，这里会显示当前统计信息。</p>
                 )}
               </div>
 
@@ -1168,7 +1180,12 @@ function App() {
                     <section className="preview-stage preview-stage-solo">
                       <div className="panel-head">
                         <span>{currentDoc.title}</span>
-                        <small>{currentDoc.path || "未保存草稿"}</small>
+                        <div className="preview-stage-actions">
+                          <small>{currentDoc.path || "未保存草稿"}</small>
+                          <button className="secondary-button" onClick={exitPreviewMode}>
+                            返回编辑
+                          </button>
+                        </div>
                       </div>
                       <article ref={previewRef} className="markdown-body preview-scroll">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{deferredContent}</ReactMarkdown>
@@ -1224,11 +1241,9 @@ function App() {
                 <section className={`home ${isDragActive ? "drag-active" : ""}`}>
                   <div className="hero-card">
                     <div className="hero-copy">
-                      <span className="hero-tag">正式版 {APP_VERSION_LABEL}</span>
-                      <h2>更接近桌面软件逻辑的 Markdown 工作区</h2>
-                      <p>
-                        顶部菜单已经收进真实窗口标题栏，文件、编辑、视图、帮助各自分工明确。你可以在双栏模式下写作，也可以切换到独立预览模式专注阅读。
-                      </p>
+                      <span className="hero-tag">{APP_TITLE}</span>
+                      <h2>{emptyStateTitle}</h2>
+                      <p>{emptyStateDescription}</p>
                       <div className="hero-actions">
                         <button className="primary-button" onClick={() => void openDocument()}>
                           打开本地文档
@@ -1241,16 +1256,16 @@ function App() {
 
                     <div className="hero-grid">
                       <article className="hero-info-card">
-                        <strong>标题栏主导航</strong>
-                        <span>常用操作集中到窗口顶部，减少页面内重复工具条。</span>
+                        <strong>最近文件</strong>
+                        <span>常用文档会保留在左侧，方便继续处理。</span>
                       </article>
                       <article className="hero-info-card">
-                        <strong>双模式切换</strong>
-                        <span>编辑模式双栏联动，预览模式则让内容本身成为主角。</span>
+                        <strong>拖入打开</strong>
+                        <span>支持把 Markdown 文件直接拖入当前窗口。</span>
                       </article>
                       <article className="hero-info-card">
-                        <strong>更稳的工作区层级</strong>
-                        <span>左侧概览更窄，主内容更突出，整体视觉更简洁克制。</span>
+                        <strong>双栏编辑</strong>
+                        <span>编辑与预览同步显示，适合写作和校对。</span>
                       </article>
                     </div>
                   </div>
@@ -1296,7 +1311,7 @@ function App() {
 
               <div className="help-section">
                 <strong>当前版本</strong>
-                <p>{APP_VERSION_LABEL}</p>
+                <p>{APP_TITLE} {APP_VERSION_LABEL}</p>
               </div>
             </div>
           </section>

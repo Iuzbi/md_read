@@ -34,14 +34,16 @@
 html,
 body,
 #root {
-  min-height: 100%;
+  height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
 body {
-  min-height: 100vh;
+  height: 100vh;
   color: var(--text);
   background: var(--wallpaper);
+  overflow: hidden;
 }
 
 body.is-resizing-panels {
@@ -70,17 +72,20 @@ button:disabled {
 }
 
 .shell {
-  min-height: 100vh;
+  height: 100vh;
   position: relative;
+  overflow: hidden;
 }
 
 .window-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .window-chrome {
+  flex: 0 0 44px;
   height: 44px;
   display: flex;
   align-items: center;
@@ -89,6 +94,8 @@ button:disabled {
   border-bottom: 1px solid rgba(118, 134, 146, 0.1);
   backdrop-filter: blur(18px);
   -webkit-app-region: drag;
+  position: relative;
+  z-index: 200;
 }
 
 .chrome-left,
@@ -293,6 +300,7 @@ button:disabled {
 
 .shell-frame {
   flex: 1;
+  min-height: 0;
   margin: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
@@ -300,12 +308,15 @@ button:disabled {
   box-shadow: var(--shadow);
   backdrop-filter: blur(22px);
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .workspace-frame {
   height: 100%;
   min-height: 0;
   display: grid;
+  overflow: hidden;
 }
 
 .workspace-frame.with-sidebar {
@@ -319,6 +330,7 @@ button:disabled {
 
 .side-panel {
   min-width: 0;
+  min-height: 0;
   padding: 18px 14px;
   border-right: 1px solid rgba(118, 134, 146, 0.08);
   background: rgba(255, 255, 255, 0.34);
@@ -469,6 +481,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow: hidden;
 }
 
 .document-summary {
@@ -553,6 +566,13 @@ button:disabled {
 
 .preview-stage.preview-stage-solo {
   flex: 1;
+}
+
+.preview-stage-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .panel-head,
@@ -680,6 +700,7 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   gap: 20px;
+  overflow: auto;
 }
 
 .home.drag-active .hero-card {
@@ -839,11 +860,17 @@ button:disabled {
   .document-pills {
     justify-content: flex-start;
   }
+
+  .preview-stage-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }
 
 @media (max-width: 760px) {
   .window-chrome {
     height: auto;
+    flex: 0 0 auto;
     padding: 8px 12px;
   }
 
@@ -869,5 +896,10 @@ button:disabled {
     right: 10px;
     left: 10px;
     width: auto;
+  }
+
+  .preview-stage-actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
