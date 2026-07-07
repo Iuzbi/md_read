@@ -4,7 +4,7 @@ export const starterMarkdown = `# 欢迎使用 MoJian Markdown
 
 ## 现在可以做什么
 
-- 打开本地 `.md`、`.markdown`、`.txt` 文档
+- 打开本地 \`.md\`、\`.markdown\`、\`.txt\` 文档
 - 拖拽文件到窗口，直接接管到当前实例
 - 在双栏模式中同步编辑与预览
 - 切换不同的护眼主题
