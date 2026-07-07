@@ -1,85 +1,201 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { starterMarkdown } from "./sample";
 
+const STORAGE_KEYS = {
+  theme: "mojian-theme",
+  editorRatio: "mojian-editor-ratio",
+  recentDocs: "mojian-recent-docs"
+};
+
 const themes = [
   {
     id: "mist",
-    name: "雾青",
-    note: "适合长时间阅读",
+    name: "Mist Blue",
+    note: "Clean and soft for long reading sessions.",
     colors: {
-      "--app-bg": "#edf2f5",
-      "--sidebar-bg": "rgba(245, 248, 251, 0.96)",
-      "--main-bg": "rgba(251, 252, 253, 0.94)",
-      "--panel-bg": "rgba(255, 255, 255, 0.96)",
-      "--preview-bg": "rgba(252, 253, 254, 0.98)",
+      "--app-bg": "#eaf0f4",
+      "--shell-bg": "rgba(245, 248, 251, 0.78)",
+      "--toolbar-bg": "rgba(252, 253, 255, 0.84)",
+      "--panel-bg": "rgba(255, 255, 255, 0.86)",
+      "--panel-alt": "rgba(249, 251, 253, 0.88)",
       "--surface-strong": "#ffffff",
-      "--border": "rgba(118, 134, 146, 0.12)",
-      "--text": "#21313d",
-      "--muted": "#6f7f8a",
-      "--accent": "#25866a",
-      "--accent-strong": "#16604a",
-      "--danger": "#c95d5d",
-      "--shadow": "0 18px 48px rgba(26, 38, 46, 0.08)"
+      "--border": "rgba(91, 112, 128, 0.12)",
+      "--text": "#1e2f3c",
+      "--muted": "#6f808c",
+      "--accent": "#2b7a78",
+      "--accent-soft": "rgba(43, 122, 120, 0.12)",
+      "--danger": "#c56a67",
+      "--shadow": "0 18px 48px rgba(24, 37, 48, 0.08)",
+      "--wallpaper": "radial-gradient(circle at top left, rgba(143, 196, 210, 0.35), transparent 34%), radial-gradient(circle at top right, rgba(210, 226, 231, 0.48), transparent 28%), linear-gradient(140deg, #eef4f7 0%, #dde8ee 100%)",
+      "--wallpaper-soft": "rgba(232, 240, 245, 0.72)"
+    }
+  },
+  {
+    id: "matcha",
+    name: "Matcha Cloud",
+    note: "A softer green with stronger eye comfort.",
+    colors: {
+      "--app-bg": "#eef3ec",
+      "--shell-bg": "rgba(248, 251, 246, 0.76)",
+      "--toolbar-bg": "rgba(253, 254, 251, 0.84)",
+      "--panel-bg": "rgba(255, 255, 252, 0.88)",
+      "--panel-alt": "rgba(250, 252, 248, 0.88)",
+      "--surface-strong": "#fffefb",
+      "--border": "rgba(104, 125, 103, 0.12)",
+      "--text": "#273426",
+      "--muted": "#73826f",
+      "--accent": "#5d8f63",
+      "--accent-soft": "rgba(93, 143, 99, 0.13)",
+      "--danger": "#b76b63",
+      "--shadow": "0 18px 46px rgba(39, 52, 38, 0.08)",
+      "--wallpaper": "radial-gradient(circle at top left, rgba(195, 218, 195, 0.42), transparent 30%), radial-gradient(circle at 80% 18%, rgba(226, 234, 207, 0.5), transparent 26%), linear-gradient(145deg, #eff5ed 0%, #dfe8dc 100%)",
+      "--wallpaper-soft": "rgba(236, 242, 232, 0.72)"
     }
   },
   {
     id: "sand",
-    name: "浅砂",
-    note: "更接近纸面观感",
+    name: "Warm Sand",
+    note: "Paper-like and comfortable in preview mode.",
     colors: {
-      "--app-bg": "#f2ede6",
-      "--sidebar-bg": "rgba(250, 247, 242, 0.96)",
-      "--main-bg": "rgba(253, 250, 247, 0.94)",
-      "--panel-bg": "rgba(255, 252, 249, 0.96)",
-      "--preview-bg": "rgba(255, 253, 251, 0.98)",
-      "--surface-strong": "#fffdfa",
-      "--border": "rgba(139, 120, 97, 0.12)",
-      "--text": "#372d26",
-      "--muted": "#857568",
-      "--accent": "#a9794f",
-      "--accent-strong": "#7d5937",
-      "--danger": "#c06969",
-      "--shadow": "0 18px 46px rgba(62, 48, 35, 0.08)"
+      "--app-bg": "#f2ede5",
+      "--shell-bg": "rgba(249, 245, 239, 0.76)",
+      "--toolbar-bg": "rgba(255, 252, 248, 0.84)",
+      "--panel-bg": "rgba(255, 252, 248, 0.88)",
+      "--panel-alt": "rgba(252, 248, 242, 0.88)",
+      "--surface-strong": "#fffdf8",
+      "--border": "rgba(124, 103, 80, 0.13)",
+      "--text": "#382b22",
+      "--muted": "#8b7869",
+      "--accent": "#b07a51",
+      "--accent-soft": "rgba(176, 122, 81, 0.13)",
+      "--danger": "#c16d64",
+      "--shadow": "0 18px 48px rgba(53, 40, 29, 0.08)",
+      "--wallpaper": "radial-gradient(circle at left top, rgba(232, 205, 173, 0.36), transparent 32%), radial-gradient(circle at 86% 16%, rgba(244, 229, 204, 0.52), transparent 28%), linear-gradient(140deg, #f4efe8 0%, #e9ddd0 100%)",
+      "--wallpaper-soft": "rgba(243, 237, 228, 0.74)"
     }
   },
   {
     id: "lake",
-    name: "湖蓝",
-    note: "白天更清透",
+    name: "Lake Light",
+    note: "Cooler and calmer for focused work.",
     colors: {
-      "--app-bg": "#e7eff5",
-      "--sidebar-bg": "rgba(244, 248, 252, 0.96)",
-      "--main-bg": "rgba(250, 252, 254, 0.94)",
-      "--panel-bg": "rgba(255, 255, 255, 0.96)",
-      "--preview-bg": "rgba(252, 254, 255, 0.98)",
+      "--app-bg": "#e8f0f5",
+      "--shell-bg": "rgba(245, 249, 252, 0.76)",
+      "--toolbar-bg": "rgba(251, 254, 255, 0.84)",
+      "--panel-bg": "rgba(255, 255, 255, 0.88)",
+      "--panel-alt": "rgba(248, 252, 254, 0.88)",
       "--surface-strong": "#ffffff",
-      "--border": "rgba(107, 128, 147, 0.12)",
-      "--text": "#203241",
-      "--muted": "#6b7c8d",
-      "--accent": "#2f74a8",
-      "--accent-strong": "#22557a",
-      "--danger": "#c45f68",
-      "--shadow": "0 18px 48px rgba(30, 48, 65, 0.08)"
+      "--border": "rgba(91, 117, 140, 0.12)",
+      "--text": "#203243",
+      "--muted": "#6b7f91",
+      "--accent": "#3b78a1",
+      "--accent-soft": "rgba(59, 120, 161, 0.13)",
+      "--danger": "#bf6a6d",
+      "--shadow": "0 18px 48px rgba(30, 48, 65, 0.08)",
+      "--wallpaper": "radial-gradient(circle at 16% 10%, rgba(167, 208, 226, 0.38), transparent 32%), radial-gradient(circle at 86% 18%, rgba(206, 229, 240, 0.52), transparent 28%), linear-gradient(145deg, #edf4f8 0%, #dbe6ee 100%)",
+      "--wallpaper-soft": "rgba(232, 240, 245, 0.72)"
+    }
+  },
+  {
+    id: "lavender",
+    name: "Lavender Fog",
+    note: "A gentle purple-grey with more design character.",
+    colors: {
+      "--app-bg": "#eeedf4",
+      "--shell-bg": "rgba(247, 246, 251, 0.76)",
+      "--toolbar-bg": "rgba(253, 252, 255, 0.84)",
+      "--panel-bg": "rgba(255, 255, 255, 0.88)",
+      "--panel-alt": "rgba(250, 249, 253, 0.88)",
+      "--surface-strong": "#ffffff",
+      "--border": "rgba(108, 103, 129, 0.12)",
+      "--text": "#2d2b3a",
+      "--muted": "#7d788d",
+      "--accent": "#7b73a8",
+      "--accent-soft": "rgba(123, 115, 168, 0.13)",
+      "--danger": "#b96c73",
+      "--shadow": "0 18px 48px rgba(40, 37, 55, 0.08)",
+      "--wallpaper": "radial-gradient(circle at 12% 14%, rgba(210, 203, 233, 0.42), transparent 30%), radial-gradient(circle at 88% 16%, rgba(234, 226, 245, 0.52), transparent 28%), linear-gradient(145deg, #f1f0f6 0%, #e4e0ed 100%)",
+      "--wallpaper-soft": "rgba(238, 236, 244, 0.72)"
+    }
+  },
+  {
+    id: "amber",
+    name: "Amber Sun",
+    note: "Warm and bright with a richer desktop feel.",
+    colors: {
+      "--app-bg": "#f5efe6",
+      "--shell-bg": "rgba(251, 247, 240, 0.76)",
+      "--toolbar-bg": "rgba(255, 252, 247, 0.84)",
+      "--panel-bg": "rgba(255, 252, 248, 0.88)",
+      "--panel-alt": "rgba(252, 248, 242, 0.88)",
+      "--surface-strong": "#fffdf9",
+      "--border": "rgba(135, 108, 78, 0.12)",
+      "--text": "#3a2d21",
+      "--muted": "#8c7660",
+      "--accent": "#c28a48",
+      "--accent-soft": "rgba(194, 138, 72, 0.13)",
+      "--danger": "#bc665f",
+      "--shadow": "0 18px 48px rgba(56, 43, 30, 0.08)",
+      "--wallpaper": "radial-gradient(circle at 14% 12%, rgba(236, 198, 135, 0.36), transparent 30%), radial-gradient(circle at 86% 18%, rgba(245, 230, 195, 0.52), transparent 28%), linear-gradient(145deg, #f6f1ea 0%, #eadfce 100%)",
+      "--wallpaper-soft": "rgba(245, 239, 230, 0.74)"
+    }
+  },
+  {
+    id: "ink",
+    name: "Ink Night",
+    note: "A dark theme that keeps contrast soft.",
+    colors: {
+      "--app-bg": "#1b2229",
+      "--shell-bg": "rgba(28, 35, 42, 0.82)",
+      "--toolbar-bg": "rgba(34, 41, 48, 0.84)",
+      "--panel-bg": "rgba(31, 39, 46, 0.88)",
+      "--panel-alt": "rgba(26, 33, 39, 0.9)",
+      "--surface-strong": "#222a32",
+      "--border": "rgba(147, 165, 180, 0.12)",
+      "--text": "#e7eef5",
+      "--muted": "#9eafbd",
+      "--accent": "#6cae9b",
+      "--accent-soft": "rgba(108, 174, 155, 0.16)",
+      "--danger": "#df8d85",
+      "--shadow": "0 18px 48px rgba(0, 0, 0, 0.28)",
+      "--wallpaper": "radial-gradient(circle at 10% 10%, rgba(54, 84, 95, 0.38), transparent 28%), radial-gradient(circle at 84% 16%, rgba(63, 97, 88, 0.28), transparent 24%), linear-gradient(145deg, #1d252d 0%, #14191f 100%)",
+      "--wallpaper-soft": "rgba(26, 33, 40, 0.74)"
     }
   }
 ];
 
 const quickInsert = [
-  { label: "H2", value: "\n## 新章节\n" },
-  { label: "清单", value: "\n- 待办事项\n- 下一步\n" },
-  { label: "引用", value: "\n> 在这里写下重点\n" },
-  { label: "代码", value: "\n```ts\nconst note = 'hello';\n```\n" }
+  { label: "H2", value: "\n## Section Title\n" },
+  { label: "List", value: "\n- Todo item\n- Next action\n" },
+  { label: "Quote", value: "\n> Write the key point here\n" },
+  { label: "Code", value: '\n```ts\nconst note = "hello";\n```\n' }
 ];
+
+function readStoredRecentDocs() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEYS.recentDocs);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((item) => item?.path) : [];
+  } catch {
+    return [];
+  }
+}
 
 function createDraftDocument() {
   return {
     id: `draft-${Date.now()}`,
-    title: "未命名文档",
+    title: "Untitled",
     path: "",
     content: starterMarkdown,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    lastSavedContent: starterMarkdown,
+    dirty: false
   };
 }
 
@@ -90,10 +206,10 @@ function extractTitle(content) {
     .find(Boolean);
 
   if (!firstLine) {
-    return "未命名文档";
+    return "Untitled";
   }
 
-  return firstLine.replace(/^#+\s*/, "") || "未命名文档";
+  return firstLine.replace(/^#+\s*/, "") || "Untitled";
 }
 
 function createDocumentFromPayload(payload) {
@@ -102,7 +218,9 @@ function createDocumentFromPayload(payload) {
     title: payload.title || extractTitle(payload.content),
     path: payload.path || "",
     content: payload.content,
-    updatedAt: payload.updatedAt || new Date().toISOString()
+    updatedAt: payload.updatedAt || new Date().toISOString(),
+    lastSavedContent: payload.content,
+    dirty: false
   };
 }
 
@@ -126,18 +244,39 @@ function getDocumentMetrics(content) {
   return { lines, chars, words };
 }
 
+function dedupeRecentDocs(documents) {
+  const map = new Map();
+
+  documents.forEach((item) => {
+    if (!item?.path) {
+      return;
+    }
+
+    map.set(item.path, {
+      path: item.path,
+      title: item.title || "Untitled",
+      updatedAt: item.updatedAt || new Date().toISOString()
+    });
+  });
+
+  return Array.from(map.values())
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 8);
+}
+
 function App() {
   const [themeId, setThemeId] = useState(() => {
-    return window.localStorage.getItem("mojian-theme") || themes[0].id;
+    return window.localStorage.getItem(STORAGE_KEYS.theme) || themes[0].id;
   });
   const [currentDoc, setCurrentDoc] = useState(null);
-  const [status, setStatus] = useState("准备就绪");
+  const [status, setStatus] = useState("Ready");
   const [isEditorPriority, setIsEditorPriority] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [recentDocs, setRecentDocs] = useState(() => readStoredRecentDocs());
   const [editorRatio, setEditorRatio] = useState(() => {
-    const saved = Number(window.localStorage.getItem("mojian-editor-ratio"));
-    return Number.isFinite(saved) && saved >= 0.35 && saved <= 0.75 ? saved : 0.56;
+    const saved = Number(window.localStorage.getItem(STORAGE_KEYS.editorRatio));
+    return Number.isFinite(saved) && saved >= 0.36 && saved <= 0.75 ? saved : 0.55;
   });
   const [isResizing, setIsResizing] = useState(false);
   const editorRef = useRef(null);
@@ -151,37 +290,64 @@ function App() {
     return themes.find((theme) => theme.id === themeId) || themes[0];
   }, [themeId]);
 
-  const themeStyle = useMemo(() => activeTheme.colors, [activeTheme]);
+  const themeStyle = useMemo(() => {
+    return activeTheme.colors;
+  }, [activeTheme]);
+
   const metrics = useMemo(() => {
     return currentDoc ? getDocumentMetrics(currentDoc.content) : null;
   }, [currentDoc]);
 
+  const deferredContent = useDeferredValue(currentDoc?.content || "");
+
   useEffect(() => {
-    window.localStorage.setItem("mojian-theme", themeId);
+    window.localStorage.setItem(STORAGE_KEYS.theme, themeId);
   }, [themeId]);
 
   useEffect(() => {
-    window.localStorage.setItem("mojian-editor-ratio", String(editorRatio));
+    window.localStorage.setItem(STORAGE_KEYS.editorRatio, String(editorRatio));
   }, [editorRatio]);
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEYS.recentDocs, JSON.stringify(recentDocs));
+  }, [recentDocs]);
 
   useEffect(() => {
     document.title = currentDoc ? `${currentDoc.title} - MoJian Markdown` : "MoJian Markdown";
   }, [currentDoc]);
 
+  const rememberRecentDoc = useEffectEvent((documentLike) => {
+    if (!documentLike?.path) {
+      return;
+    }
+
+    setRecentDocs((current) =>
+      dedupeRecentDocs([
+        {
+          path: documentLike.path,
+          title: documentLike.title,
+          updatedAt: documentLike.updatedAt || new Date().toISOString()
+        },
+        ...current
+      ])
+    );
+  });
+
   const replaceCurrentDocument = useEffectEvent((payload, nextStatus) => {
     const nextDoc = createDocumentFromPayload(payload);
     setCurrentDoc(nextDoc);
+    rememberRecentDoc(nextDoc);
     setStatus(nextStatus);
   });
 
-  const openDocumentByPath = useEffectEvent(async (filePath, nextStatus = "已打开外部文档") => {
+  const openDocumentByPath = useEffectEvent(async (filePath, nextStatus = "External document opened") => {
     if (!filePath) {
       return;
     }
 
     const result = await window.mdBridge.openPath(filePath);
     if (!result) {
-      setStatus("无法打开该文档");
+      setStatus("Unable to open this document");
       return;
     }
 
@@ -194,7 +360,7 @@ function App() {
     }
 
     return window.mdBridge.onExternalOpen((filePath) => {
-      void openDocumentByPath(filePath, "已在当前窗口接管文档");
+      void openDocumentByPath(filePath, "Document redirected to the current window");
     });
   }, [openDocumentByPath]);
 
@@ -248,7 +414,7 @@ function App() {
       event.preventDefault();
       dragDepthRef.current = 0;
       setIsDragActive(false);
-      void openDocumentByPath(file.path, "已拖入打开");
+      void openDocumentByPath(file.path, "Opened from drag and drop");
     }
 
     window.addEventListener("dragenter", handleDragEnter);
@@ -292,53 +458,24 @@ function App() {
     });
   });
 
-  function handleEditorScroll() {
-    if (syncSourceRef.current && syncSourceRef.current !== "editor") {
-      return;
-    }
-    syncScroll("editor");
-  }
-
-  function handlePreviewScroll() {
-    if (syncSourceRef.current && syncSourceRef.current !== "preview") {
-      return;
-    }
-    syncScroll("preview");
-  }
-
-  function updateCurrentContent(nextContent) {
-    setCurrentDoc((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return {
-        ...current,
-        title: extractTitle(nextContent),
-        content: nextContent,
-        updatedAt: new Date().toISOString()
-      };
-    });
-    setStatus("文档内容已更新");
-  }
-
-  function createDocument() {
+  const createDocument = useEffectEvent(() => {
     setCurrentDoc(createDraftDocument());
-    setStatus("已创建新草稿");
-  }
+    setStatus("New draft created");
+  });
 
-  async function openDocument() {
+  const openDocument = useEffectEvent(async () => {
     const result = await window.mdBridge.openMarkdown();
     if (!result) {
-      setStatus("已取消打开文件");
+      setStatus("Open cancelled");
       return;
     }
-    replaceCurrentDocument(result, `已打开 ${result.title}`);
-  }
 
-  async function saveDocument(forceSaveAs = false) {
+    replaceCurrentDocument(result, `Opened ${result.title}`);
+  });
+
+  const saveDocument = useEffectEvent(async (forceSaveAs = false) => {
     if (!currentDoc) {
-      setStatus("当前没有可保存的文档");
+      setStatus("There is no document to save");
       return;
     }
 
@@ -354,26 +491,100 @@ function App() {
         : await window.mdBridge.saveMarkdown(payload);
 
     if (!result.saved) {
-      setStatus("保存已取消");
+      setStatus("Save cancelled");
       return;
     }
 
-    setCurrentDoc((current) => {
-      if (!current) {
-        return current;
+    setCurrentDoc((documentLike) => {
+      if (!documentLike) {
+        return documentLike;
       }
-      return {
-        ...current,
+
+      const nextDoc = {
+        ...documentLike,
         path: result.path,
-        updatedAt: result.updatedAt || new Date().toISOString()
+        updatedAt: result.updatedAt || new Date().toISOString(),
+        lastSavedContent: documentLike.content,
+        dirty: false
+      };
+
+      rememberRecentDoc(nextDoc);
+      return nextDoc;
+    });
+
+    setStatus(`Saved to ${result.path}`);
+  });
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      const isCommand = event.ctrlKey || event.metaKey;
+      if (event.key === "Escape" && isSettingsOpen) {
+        setIsSettingsOpen(false);
+        return;
+      }
+
+      if (!isCommand) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === "o") {
+        event.preventDefault();
+        void openDocument();
+      }
+
+      if (key === "n") {
+        event.preventDefault();
+        createDocument();
+      }
+
+      if (key === "s") {
+        event.preventDefault();
+        void saveDocument(event.shiftKey);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [createDocument, isSettingsOpen, openDocument, saveDocument]);
+
+  function handleEditorScroll() {
+    if (syncSourceRef.current && syncSourceRef.current !== "editor") {
+      return;
+    }
+    syncScroll("editor");
+  }
+
+  function handlePreviewScroll() {
+    if (syncSourceRef.current && syncSourceRef.current !== "preview") {
+      return;
+    }
+    syncScroll("preview");
+  }
+
+  function updateCurrentContent(nextContent) {
+    setCurrentDoc((documentLike) => {
+      if (!documentLike) {
+        return documentLike;
+      }
+
+      return {
+        ...documentLike,
+        title: extractTitle(nextContent),
+        content: nextContent,
+        updatedAt: new Date().toISOString(),
+        dirty: nextContent !== documentLike.lastSavedContent
       };
     });
-    setStatus(`已保存到 ${result.path}`);
+
+    setStatus("Content updated");
   }
 
   function closeDocument() {
     setCurrentDoc(null);
-    setStatus("工作区已清空");
+    setStatus("Workspace cleared");
   }
 
   function insertSnippet(snippet) {
@@ -404,7 +615,40 @@ function App() {
 
   function focusEditor() {
     editorRef.current?.focus();
-    setStatus("已聚焦编辑区");
+    setStatus("Editor focused");
+  }
+
+  async function copyPath() {
+    if (!currentDoc?.path) {
+      setStatus("This document has no file path yet");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(currentDoc.path);
+      setStatus("File path copied");
+    } catch {
+      setStatus("Copy path failed");
+    }
+  }
+
+  async function revealInFolder() {
+    if (!currentDoc?.path || !window.mdBridge?.revealInFolder) {
+      setStatus("This document has no file path yet");
+      return;
+    }
+
+    await window.mdBridge.revealInFolder(currentDoc.path);
+    setStatus("Revealed in Explorer");
+  }
+
+  function restoreRecentDocument(item) {
+    void openDocumentByPath(item.path, "Restored from recent files");
+  }
+
+  function clearRecentDocs() {
+    setRecentDocs([]);
+    setStatus("Recent files cleared");
   }
 
   function applyResize(clientX) {
@@ -412,9 +656,10 @@ function App() {
     if (!grid) {
       return;
     }
+
     const rect = grid.getBoundingClientRect();
     const nextRatio = (clientX - rect.left) / rect.width;
-    const clamped = Math.min(0.75, Math.max(0.35, nextRatio));
+    const clamped = Math.min(0.75, Math.max(0.36, nextRatio));
     setEditorRatio(clamped);
   }
 
@@ -429,6 +674,7 @@ function App() {
     if (resizeFrameRef.current) {
       cancelAnimationFrame(resizeFrameRef.current);
     }
+
     resizeFrameRef.current = requestAnimationFrame(() => {
       applyResize(event.clientX);
     });
@@ -447,6 +693,7 @@ function App() {
       if (resizeFrameRef.current) {
         cancelAnimationFrame(resizeFrameRef.current);
       }
+
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", stopResize);
       document.body.classList.remove("is-resizing-panels");
@@ -455,186 +702,232 @@ function App() {
 
   return (
     <div className="shell" style={themeStyle}>
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-mark" />
-          <div>
-            <p className="eyebrow">Workspace</p>
-            <h1>MoJian</h1>
-          </div>
-        </div>
-
-        <div className="sidebar-group">
-          <button className="sidebar-button sidebar-button-primary" onClick={openDocument}>
-            打开文档
-          </button>
-          <button className="sidebar-button" onClick={createDocument}>
-            新建草稿
-          </button>
-          <button className="sidebar-button" onClick={() => saveDocument(false)} disabled={!currentDoc}>
-            保存
-          </button>
-          <button className="sidebar-button" onClick={() => setIsSettingsOpen(true)}>
-            设置
-          </button>
-        </div>
-
-        <div className="sidebar-footer">
-          <div className="sidebar-status">
-            <small>当前状态</small>
-            <strong>{currentDoc ? currentDoc.title : "空白工作区"}</strong>
-            <span>{currentDoc ? formatTime(currentDoc.updatedAt) : status}</span>
-          </div>
-          {currentDoc ? (
-            <div className="sidebar-stats">
-              <span>{metrics?.chars} 字符</span>
-              <span>{metrics?.lines} 行</span>
-              <span>{metrics?.words} 词</span>
+      <div className="shell-frame">
+        <header className="topbar">
+          <div className="brand-block">
+            <div className="brand-mark" />
+            <div className="brand-copy">
+              <strong>MoJian Markdown</strong>
+              <span>{currentDoc ? "Single document workspace" : "Minimal Markdown editor for Windows"}</span>
             </div>
-          ) : (
-            <p className="sidebar-tip">支持拖入 `.md` 文档，或双击文档由当前窗口接管。</p>
-          )}
-        </div>
-      </aside>
-
-      <main className="workspace">
-        <header className="workspace-head">
-          <div className="workspace-copy">
-            <p className="eyebrow">Current File</p>
-            <h2>{currentDoc ? currentDoc.title : "未打开文档"}</h2>
-            <span>{currentDoc?.path || "打开 Markdown 文件开始工作"}</span>
           </div>
 
-          <div className="workspace-tools">
-            {quickInsert.map((item) => (
-              <button
-                key={item.label}
-                className="tool-chip"
-                onClick={() => insertSnippet(item.value)}
-                disabled={!currentDoc}
-              >
-                {item.label}
-              </button>
-            ))}
-            <button className="tool-chip" onClick={focusEditor} disabled={!currentDoc}>
-              聚焦编辑
+          <div className="topbar-actions">
+            <button className="primary-button" onClick={() => void openDocument()}>
+              Open
             </button>
-            <button className="tool-chip" onClick={() => setIsEditorPriority((value) => !value)} disabled={!currentDoc}>
-              {isEditorPriority ? "恢复双栏" : "编辑优先"}
+            <button className="secondary-button" onClick={createDocument}>
+              New
             </button>
-            <button className="tool-chip tool-chip-danger" onClick={closeDocument} disabled={!currentDoc}>
-              关闭
+            <button className="secondary-button" onClick={() => void saveDocument(false)} disabled={!currentDoc}>
+              Save
             </button>
+            <button className="secondary-button" onClick={() => void saveDocument(true)} disabled={!currentDoc}>
+              Save As
+            </button>
+            <button className="secondary-button" onClick={() => setIsSettingsOpen(true)}>
+              Settings
+            </button>
+          </div>
+
+          <div className="topbar-meta">
+            {currentDoc ? (
+              <>
+                <span className="meta-pill">{currentDoc.dirty ? "Unsaved" : "Saved"}</span>
+                <span className="meta-pill">{metrics?.chars} chars</span>
+                <span className="meta-pill">{metrics?.lines} lines</span>
+                <span className="meta-pill">{metrics?.words} words</span>
+                <span className="meta-text">{formatTime(currentDoc.updatedAt)}</span>
+              </>
+            ) : (
+              <span className="meta-text">Drag files in, double click linked docs, or reuse the existing window</span>
+            )}
           </div>
         </header>
 
-        {currentDoc ? (
-          <>
-            <div
-              ref={contentGridRef}
-              className={`content-grid ${isEditorPriority ? "compact" : ""} ${isResizing ? "resizing" : ""}`}
-              style={{
-                "--editor-ratio": String(isEditorPriority ? Math.max(editorRatio, 0.6) : editorRatio),
-                "--preview-ratio": String(1 - (isEditorPriority ? Math.max(editorRatio, 0.6) : editorRatio))
-              }}
-            >
-              <section className="panel">
-                <div className="panel-head">
-                  <span>编辑</span>
-                  <small>{currentDoc.path ? "本地文件" : "未保存草稿"}</small>
+        <main className="workspace">
+          {currentDoc ? (
+            <>
+              <section className="document-head">
+                <div className="document-copy">
+                  <div className="title-row">
+                    <h1>{currentDoc.title}</h1>
+                    {currentDoc.dirty ? <span className="dirty-dot" /> : null}
+                  </div>
+                  <p>{currentDoc.path || "Unsaved draft"}</p>
                 </div>
-                <textarea
-                  ref={editorRef}
-                  className="editor-textarea"
-                  value={currentDoc.content}
-                  onChange={(event) => updateCurrentContent(event.target.value)}
-                  onScroll={handleEditorScroll}
-                  spellCheck="false"
-                />
+
+                <div className="document-tools">
+                  {quickInsert.map((item) => (
+                    <button key={item.label} className="tool-chip" onClick={() => insertSnippet(item.value)}>
+                      {item.label}
+                    </button>
+                  ))}
+                  <button className="tool-chip" onClick={focusEditor}>
+                    Focus Editor
+                  </button>
+                  <button className="tool-chip" onClick={() => setIsEditorPriority((value) => !value)}>
+                    {isEditorPriority ? "Balanced View" : "Editor First"}
+                  </button>
+                  <button className="tool-chip" onClick={copyPath} disabled={!currentDoc.path}>
+                    Copy Path
+                  </button>
+                  <button className="tool-chip" onClick={revealInFolder} disabled={!currentDoc.path}>
+                    Show in Folder
+                  </button>
+                  <button className="tool-chip tool-chip-danger" onClick={closeDocument}>
+                    Close
+                  </button>
+                </div>
               </section>
 
               <div
-                className="panel-resizer"
-                role="separator"
-                aria-label="调整编辑区与预览区宽度"
-                aria-orientation="vertical"
-                onPointerDown={startResize}
+                ref={contentGridRef}
+                className={`content-grid ${isEditorPriority ? "compact" : ""} ${isResizing ? "resizing" : ""}`}
+                style={{
+                  "--editor-ratio": String(isEditorPriority ? Math.max(editorRatio, 0.62) : editorRatio),
+                  "--preview-ratio": String(1 - (isEditorPriority ? Math.max(editorRatio, 0.62) : editorRatio))
+                }}
               >
-                <span />
-              </div>
+                <section className="panel">
+                  <div className="panel-head">
+                    <span>Editor</span>
+                    <small>{currentDoc.path ? "Local file" : "Unsaved draft"}</small>
+                  </div>
+                  <textarea
+                    ref={editorRef}
+                    className="editor-textarea"
+                    value={currentDoc.content}
+                    onChange={(event) => updateCurrentContent(event.target.value)}
+                    onScroll={handleEditorScroll}
+                    spellCheck="false"
+                  />
+                </section>
 
-              <section className="panel preview-panel">
-                <div className="panel-head">
-                  <span>预览</span>
-                  <small>{status}</small>
+                <div
+                  className="panel-resizer"
+                  role="separator"
+                  aria-label="Resize editor and preview panels"
+                  aria-orientation="vertical"
+                  onPointerDown={startResize}
+                >
+                  <span />
                 </div>
-                <article ref={previewRef} className="markdown-body preview-scroll" onScroll={handlePreviewScroll}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentDoc.content}</ReactMarkdown>
-                </article>
-              </section>
-            </div>
 
-            <footer className="status-bar">
-              <span>{status}</span>
-              <span>{formatTime(currentDoc.updatedAt)}</span>
-            </footer>
-          </>
-        ) : (
-          <section className={`home ${isDragActive ? "drag-active" : ""}`}>
-            <div className="home-inner">
-              <p className="eyebrow">Blank Workspace</p>
-              <h3>开始一份新的 Markdown 工作区</h3>
-              <p>拖入文档、打开本地文件，或新建一份空白草稿。</p>
-              <div className="home-actions">
-                <button className="sidebar-button sidebar-button-primary" onClick={openDocument}>
-                  打开本地文档
-                </button>
-                <button className="sidebar-button" onClick={createDocument}>
-                  新建空白草稿
-                </button>
+                <section className="panel panel-preview">
+                  <div className="panel-head">
+                    <span>Preview</span>
+                    <small>{status}</small>
+                  </div>
+                  <article ref={previewRef} className="markdown-body preview-scroll" onScroll={handlePreviewScroll}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{deferredContent}</ReactMarkdown>
+                  </article>
+                </section>
               </div>
-            </div>
-          </section>
-        )}
-      </main>
+
+              <footer className="status-bar">
+                <span>{status}</span>
+                <span>{currentDoc.path ? currentDoc.path : "Ctrl+S to save, Ctrl+Shift+S to save as"}</span>
+              </footer>
+            </>
+          ) : (
+            <section className={`home ${isDragActive ? "drag-active" : ""}`}>
+              <div className="hero-card">
+                <div className="hero-copy">
+                  <span className="hero-tag">MoJian 1.1.0</span>
+                  <h1>Start from a cleaner Markdown workspace</h1>
+                  <p>
+                    The main actions now live in the top toolbar. Open a local file, drag a document into the window,
+                    or create a new draft and start writing with a simpler layout.
+                  </p>
+                  <div className="hero-actions">
+                    <button className="primary-button" onClick={() => void openDocument()}>
+                      Open Local File
+                    </button>
+                    <button className="secondary-button" onClick={createDocument}>
+                      New Draft
+                    </button>
+                  </div>
+                </div>
+
+                <div className="hero-grid">
+                  <article className="hero-info-card">
+                    <strong>Top toolbar</strong>
+                    <span>Moves key actions upward and reduces left-side noise.</span>
+                  </article>
+                  <article className="hero-info-card">
+                    <strong>Single-instance flow</strong>
+                    <span>Drag-and-drop, file association and shortcut opens all reuse the current window.</span>
+                  </article>
+                  <article className="hero-info-card">
+                    <strong>Sync and resize</strong>
+                    <span>Editor and preview stay linked, and both panes can be resized freely.</span>
+                  </article>
+                </div>
+              </div>
+
+              <section className="recent-panel">
+                <div className="section-head">
+                  <h2>Recent Files</h2>
+                  {recentDocs.length > 0 ? (
+                    <button className="text-button" onClick={clearRecentDocs}>
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+
+                {recentDocs.length > 0 ? (
+                  <div className="recent-list">
+                    {recentDocs.map((item) => (
+                      <button key={item.path} className="recent-item" onClick={() => restoreRecentDocument(item)}>
+                        <span className="recent-title">{item.title}</span>
+                        <span className="recent-path">{item.path}</span>
+                        <span className="recent-time">{formatTime(item.updatedAt)}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="recent-empty">
+                    <span>No recent files yet</span>
+                    <small>Open or drag in a Markdown file and it will appear here for quick access.</small>
+                  </div>
+                )}
+              </section>
+            </section>
+          )}
+        </main>
+      </div>
 
       <aside className={`settings-drawer ${isSettingsOpen ? "open" : ""}`}>
         <div className="settings-head">
           <div>
-            <p className="eyebrow">Settings</p>
-            <h3>界面设置</h3>
+            <span className="settings-tag">Settings</span>
+            <h2>Theme Library</h2>
           </div>
-          <button className="tool-chip" onClick={() => setIsSettingsOpen(false)}>
-            关闭
+          <button className="secondary-button" onClick={() => setIsSettingsOpen(false)}>
+            Close
           </button>
         </div>
 
-        <section className="settings-section">
-          <div className="settings-title">
-            <span>主题背景</span>
-            <small>仅在设置页展示</small>
-          </div>
-          <div className="theme-list">
-            {themes.map((theme) => (
-              <button
-                key={theme.id}
-                className={`theme-item ${theme.id === activeTheme.id ? "active" : ""}`}
-                onClick={() => setThemeId(theme.id)}
-              >
-                <span
-                  className="theme-swatch"
-                  style={{
-                    background: `linear-gradient(135deg, ${theme.colors["--accent"]}, ${theme.colors["--app-bg"]})`
-                  }}
-                />
-                <span className="theme-copy">
-                  <strong>{theme.name}</strong>
-                  <small>{theme.note}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+        <div className="settings-copy">
+          <p>Theme switching lives only here. Each preset is designed to be richer, softer and easier on the eyes.</p>
+        </div>
+
+        <div className="theme-list">
+          {themes.map((theme) => (
+            <button
+              key={theme.id}
+              className={`theme-item ${theme.id === activeTheme.id ? "active" : ""}`}
+              onClick={() => setThemeId(theme.id)}
+            >
+              <span className="theme-swatch" style={{ background: theme.colors["--wallpaper"] }} />
+              <span className="theme-copy">
+                <strong>{theme.name}</strong>
+                <small>{theme.note}</small>
+              </span>
+            </button>
+          ))}
+        </div>
       </aside>
 
       {isSettingsOpen ? <button className="settings-mask" onClick={() => setIsSettingsOpen(false)} /> : null}

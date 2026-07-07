@@ -1,13 +1,12 @@
-export const starterMarkdown = `# 欢迎来到墨笺
+export const starterMarkdown = `# Welcome to MoJian
 
-这是一个更简约的 Markdown 工作区。
+This is a cleaner and more focused Markdown workspace.
 
-## 你可以这样开始
+## Start here
 
-- 打开本地 \`.md\` / \`.markdown\` 文件
-- 拖拽 Markdown 到窗口中直接替换当前文档
-- 打开设置页切换护眼主题
-- 拖动中间分割条调整编辑区和预览区宽度
+- Open a local \`.md\`, \`.markdown\` or \`.txt\` file
+- Drag a Markdown document into the window to replace the current content
+- Switch between eye-friendly themes in the settings page
+- Drag the center divider to resize the editor and preview panels
 
-> 这个版本更强调简洁和专注，尽量减少首页的信息堆叠。
-`;
+> This version focuses more on simplicity and clarity, with the main actions moved to the top and the theme picker tucked into settings.`;

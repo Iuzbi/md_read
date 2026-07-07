@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const path = require("node:path");
@@ -200,4 +200,13 @@ ipcMain.handle("file:saveMarkdownAs", async (_event, payload) => {
     path: filePath,
     updatedAt: stats.mtime.toISOString()
   };
+});
+
+ipcMain.handle("file:revealInFolder", async (_event, filePath) => {
+  if (!isSupportedMarkdownPath(filePath)) {
+    return { ok: false };
+  }
+
+  shell.showItemInFolder(filePath);
+  return { ok: true };
 });
